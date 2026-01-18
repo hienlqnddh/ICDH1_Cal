@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ DCS Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .header-title { color: blue; text-align: center; font-weight: bold; font-size: 20px; text-transform: uppercase; }
+        .sub-title { color: blue; text-align: center; font-weight: bold; font-size: 18px; margin-top: 10px; }
+        .timestamp { text-align: right; font-style: italic; color: #555; height: 20px; }
+        .container { max-width: 800px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 10px; box-shadow: 2px 2px 12px rgba(0,0,0,0.1); }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        button { padding: 15px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .back-btn { background-color: #6c757d; margin-top: 20px; }
+        .tool-section { display: none; margin-top: 20px; padding: 15px; border-top: 1px solid #eee; }
+        .active { display: block; }
+        input { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
+        .result { background: #f8f9fa; padding: 10px; border-left: 5px solid #28a745; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="timestamp" id="clock"></div>
+    <div class="header-title">CÔNG CỤ HỖ TRỢ TÍNH TOÁN - CHUYỂN ĐỔI THÔNG SỐ DCS</div>
+
+    <div id="main-page" class="tool-section active">
+        <div class="menu-grid">
+            <button onclick="showPage('temp-page')">Tính toán Nhiệt độ</button>
+            <button onclick="showPage('analog-page')">Thông số Nội suy Analog</button>
+            <button onclick="alert('Chức năng đang phát triển')">Trang chức năng 1</button>
+            <button onclick="alert('Chức năng đang phát triển')">Trang chức năng 2</button>
+        </div>
+    </div>
+
+    <div id="temp-page" class="tool-section">
+        <div class="sub-title">TÍNH TOÁN CHUYỂN ĐỔI NHIỆT ĐỘ CỦA PT100, TC LOẠI K</div>
+        
+        <h3>1. Chuyển đổi PT100 (Ohm -> °C)</h3>
+        <input type="number" id="pt100_r" placeholder="Nhập điện trở (Ω)">
+        <button onclick="calcPT100()">Tính toán</button>
+        <div id="res_pt100" class="result">Kết quả: --</div>
+
+        <h3>2. Chuyển đổi TC Loại K (mV -> °C)</h3>
+        <input type="number" id="tck_mv" placeholder="Nhập điện áp (mV)">
+        <input type="number" id="tck_env" placeholder="Nhiệt độ môi trường (°C)">
+        <button onclick="calcTCK()">Tính toán</button>
+        <div id="res_tck" class="result">Kết quả: --</div>
+
+        <button class="back-btn" onclick="showPage('main-page')">Quay lại trang chính</button>
+    </div>
+
+    <div id="analog-page" class="tool-section">
+        <div class="sub-title">TÍNH TOÁN - CHUYỂN ĐỔI THÔNG SỐ CHO MODULE ANALOG</div>
+        
+        <h3>1. Tính hệ số tuyến tính</h3>
+        <input type="number" id="ana_zero1" placeholder="Nhập Zero">
+        <input type="number" id="ana_span1" placeholder="Nhập Span">
+        <button onclick="calcLinear()">Tính toán</button>
+        <div id="res_linear" class="result">Kết quả: --</div>
+
+        <h3>2. Tính toán điểm Span</h3>
+        <input type="number" id="ana_zero2" placeholder="Nhập Zero">
+        <input type="number" id="ana_x2" placeholder="Nhập dòng tín hiệu x (mA)">
+        <input type="number" id="ana_y2" placeholder="Giá trị đo hiện tại y">
+        <button onclick="calcSpan()">Tính toán</button>
+        <div id="res_span" class="result">Kết quả: --</div>
+
+        <h3>3. Tính giá trị đo được</h3>
+        <input type="number" id="ana_zero3" placeholder="Nhập Zero">
+        <input type="number" id="ana_span3" placeholder="Nhập Span">
+        <input type="number" id="ana_x3" placeholder="Nhập dòng tín hiệu x (mA)">
+        <button onclick="calcValue()">Tính toán</button>
+        <div id="res_val" class="result">Kết quả: --</div>
+
+        <button class="back-btn" onclick="showPage('main-page')">Quay lại trang chính</button>
+    </div>
+</div>
+
+<script>
+    // Cập nhật thời gian thực
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleString('vi-VN');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Chuyển trang
+    function showPage(pageId) {
+        document.querySelectorAll('.tool-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(pageId).classList.add('active');
+    }
+
+    // Các hàm tính toán
+    function calcPT100() {
+        let r = parseFloat(document.getElementById('pt100_r').value);
+        let temp = (r - 100) / 0.3851; // Công thức xấp xỉ cơ bản cho PT100
+        document.getElementById('res_pt100').innerText = "Nhiệt độ: " + temp.toFixed(2) + " °C";
+    }
+
+    function calcTCK() {
+        let mv = parseFloat(document.getElementById('tck_mv').value);
+        let env = parseFloat(document.getElementById('tck_env').value);
+        let temp = (mv / 0.041) + env; // Hệ số K xấp xỉ 41uV/C
+        document.getElementById('res_tck').innerText = "Nhiệt độ: " + temp.toFixed(2) + " °C";
+    }
+
+    function calcLinear() {
+        let z = parseFloat(document.getElementById('ana_zero1').value);
+        let s = parseFloat(document.getElementById('ana_span1').value);
+        let a = (s - z) / 0.016;
+        let b = z - 0.004 * a;
+        document.getElementById('res_linear').innerText = "Cc1(a) = " + a.toFixed(4) + " | Cc2(b) = " + b.toFixed(4);
+    }
+
+    function calcSpan() {
+        let z = parseFloat(document.getElementById('ana_zero2').value);
+        let x = parseFloat(document.getElementById('ana_x2').value);
+        let y = parseFloat(document.getElementById('ana_y2').value);
+        let span = z + 16 * ((y - z) / (x - 4));
+        document.getElementById('res_span').innerText = "Span = " + span.toFixed(4);
+    }
+
+    function calcValue() {
+        let z = parseFloat(document.getElementById('ana_zero3').value);
+        let s = parseFloat(document.getElementById('ana_span3').value);
+        let x = parseFloat(document.getElementById('ana_x3').value);
+        let val = z + ((s - z) / 16) * (x - 4);
+        document.getElementById('res_val').innerText = "Giá trị đo được: " + val.toFixed(4);
+    }
+</script>
+
+</body>
+</html>
